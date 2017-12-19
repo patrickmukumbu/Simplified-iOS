@@ -293,15 +293,31 @@ final class NYPLSettingsPrimaryTableViewController: UIViewController, UITableVie
     }
   }
   
-  func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    if section == 0 {
-      return NSLocalizedString("See your books and browse the catalog from this library. You may switch to another library at any time.", comment: "")
-    } else {
-      return nil
-    }
+  func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    return UITableViewAutomaticDimension
+  }
+  
+  func tableView(_ tableView: UITableView, estimatedHeightForFooterInSection section: Int) -> CGFloat {
+    return 50
   }
   
   func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+    
+    if section == 0 {
+      let container = UIView()
+      container.preservesSuperviewLayoutMargins = true
+      let footerLabel = UILabel()
+      footerLabel.font = UIFont.customFont(forTextStyle: .caption1)
+      footerLabel.numberOfLines = 0
+      footerLabel.text = NSLocalizedString("See your books and browse the catalog from this library. You may switch to another library at any time.", comment: "")
+      container.addSubview(footerLabel)
+      footerLabel.autoPinEdge(toSuperviewMargin: .left)
+      footerLabel.autoPinEdge(toSuperviewMargin: .right)
+      footerLabel.autoPinEdge(toSuperviewEdge: .top, withInset: 8.0)
+      footerLabel.autoPinEdge(toSuperviewEdge: .bottom, withInset: 16.0)
+      
+      return container
+    }
     
     let sectionCount = tableView.numberOfSections
     if section != sectionCount - 1 {
@@ -324,7 +340,7 @@ final class NYPLSettingsPrimaryTableViewController: UIViewController, UITableVie
     }
     let container = UIView()
     container.addSubview(infoLabel!)
-    infoLabel?.autoPinEdgesToSuperviewEdges(with: UIEdgeInsetsMake(16, 0, 0, 0))
+    infoLabel?.autoPinEdgesToSuperviewEdges(with: UIEdgeInsetsMake(16, 0, 16, 0))
     return container
   }
   
