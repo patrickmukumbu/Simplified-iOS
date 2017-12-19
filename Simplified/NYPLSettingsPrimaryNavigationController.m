@@ -1,10 +1,10 @@
-#import "NYPLSettingsPrimaryTableViewController.h"
-
 #import "NYPLSettingsPrimaryNavigationController.h"
+#import "NYPLSettings.h"
+#import "SimplyE-Swift.h"
 
 @interface NYPLSettingsPrimaryNavigationController ()
 
-@property (nonatomic) NYPLSettingsPrimaryTableViewController *tableViewController;
+@property (nonatomic) NYPLSettingsAccountsTableViewController *tableViewController;
 
 @end
 
@@ -12,24 +12,18 @@
 
 #pragma mark NSObject
 
-- (instancetype)init
+- (instancetype)initWithDelegate:(id)delegate
 {
+  NSArray *accounts = [[NYPLSettings sharedSettings] settingsAccountsList];
   NYPLSettingsPrimaryTableViewController *const tableViewController =
-    [[NYPLSettingsPrimaryTableViewController alloc] init];
+    [[NYPLSettingsPrimaryTableViewController alloc] initWithAccounts:accounts];
+  
+  tableViewController.delegate = delegate;
   
   self = [super initWithRootViewController:tableViewController];
   if(!self) return nil;
   
-  self.tableViewController = tableViewController;
-  
   return self;
-}
-
-#pragma mark -
-
-- (NYPLSettingsPrimaryTableViewController *)primaryTableViewController
-{
-  return self.tableViewController;
 }
 
 @end

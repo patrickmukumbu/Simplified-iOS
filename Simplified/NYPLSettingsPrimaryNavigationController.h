@@ -1,9 +1,7 @@
-@class NYPLSettingsPrimaryTableViewController;
+@class NYPLSettingsAccountsTableViewController;
 
 @interface NYPLSettingsPrimaryNavigationController : UINavigationController
 
-// The delegate of |primaryTableViewController| is nil by default and should be set by the
-// instantiator of this class.
-@property (nonatomic, readonly) NYPLSettingsPrimaryTableViewController *primaryTableViewController;
+- (instancetype)initWithDelegate:(id)delegate;
 
 @end

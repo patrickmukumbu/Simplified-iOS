@@ -1,7 +1,7 @@
 #import "HSHelpStack.h"
 #import "HSDeskGear.h"
+#import "NYPLSettingsAccountDetailViewController.h"
 #import "NYPLSettingsPrimaryNavigationController.h"
-#import "NYPLSettingsPrimaryTableViewController.h"
 #import "NYPLSettingsEULAViewController.h"
 #import "NYPLSettings.h"
 #import "NYPLBook.h"
@@ -12,7 +12,7 @@
 #import "NYPLSettingsSplitViewController.h"
 
 @interface NYPLSettingsSplitViewController ()
-  <UISplitViewControllerDelegate, NYPLSettingsPrimaryTableViewControllerDelegate>
+  <UISplitViewControllerDelegate, NYPLSettingsAccountsTableViewControllerDelegate>
 
 @property (nonatomic) NYPLSettingsPrimaryNavigationController *primaryNavigationController;
 @property (nonatomic) bool isFirstLoad;
@@ -33,8 +33,7 @@
   self.title = NSLocalizedString(@"Settings", nil);
   self.tabBarItem.image = [UIImage imageNamed:@"Settings"];
   
-  self.primaryNavigationController = [[NYPLSettingsPrimaryNavigationController alloc] init];
-  self.primaryNavigationController.primaryTableViewController.delegate = self;
+  self.primaryNavigationController = [[NYPLSettingsPrimaryNavigationController alloc] initWithDelegate:self];
   
   self.presentsWithGesture = NO;
   self.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
@@ -45,39 +44,18 @@
 - (void)viewDidLoad
 {
   [super viewDidLoad];
-  
-  NSArray *accounts = [[NYPLSettings sharedSettings] settingsAccountsList];
-  
+    
   if(UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad &&
      (self.traitCollection.horizontalSizeClass != UIUserInterfaceSizeClassCompact)) {
-    
-    
+
     self.viewControllers = @[self.primaryNavigationController,
                              [[UINavigationController alloc] initWithRootViewController:
-                              [[NYPLSettingsAccountsTableViewController alloc] initWithAccounts:accounts]]];
-    [self highlightFirstTableViewRow:YES];
-    
-    
+                              [[NYPLSettingsAccountDetailViewController alloc] initWithAccount:AccountsManager.shared.currentAccount.id]]];
   } else {
     self.viewControllers = @[self.primaryNavigationController];
   }
   
   self.isFirstLoad = YES;
-  
-}
-
-- (void)highlightFirstTableViewRow:(bool)highlight
-{
-  if (highlight) {
-    [self.primaryNavigationController.primaryTableViewController.tableView
-     selectRowAtIndexPath:NYPLSettingsPrimaryTableViewControllerIndexPathFromSettingsItem(NYPLSettingsPrimaryTableViewControllerItemAccount)
-     animated:NO
-     scrollPosition:UITableViewScrollPositionMiddle];
-  } else {
-    [self.primaryNavigationController.primaryTableViewController.tableView
-     deselectRowAtIndexPath:NYPLSettingsPrimaryTableViewControllerIndexPathFromSettingsItem(                                     NYPLSettingsPrimaryTableViewControllerItemAccount)
-     animated:NO];
-  }
 }
 
 #pragma mark UISplitViewControllerDelegate
@@ -95,39 +73,42 @@ ontoPrimaryViewController:(__attribute__((unused)) UIViewController *)primaryVie
   }
 }
 
-#pragma mark NYPLSettingsPrimaryTableViewControllerDelegate
+- (void)traitCollectionDidChange:(UITraitCollection *)__unused previousTraitCollection
+{
+  if (self.primaryNavigationController.viewControllers.count >= 1) {
+    NYPLSettingsPrimaryTableViewController *tableVC = self.primaryNavigationController.viewControllers[0];
+    [tableVC.tableView reloadData];
+  }
+}
 
-- (void)settingsPrimaryTableViewController:(NYPLSettingsPrimaryTableViewController *const)
-                                           settingsPrimaryTableViewController
-                             didSelectItem:(NYPLSettingsPrimaryTableViewControllerItem const)item
+#pragma mark NYPLSettingsAccountsTableViewControllerDelegate
+
+- (void)didSelectWithStaticCell:(enum PrimaryTableViewStaticCellType)staticCell
+                         atPath:(NSIndexPath *)__unused path
+      fromPrimaryViewController:(NYPLSettingsPrimaryTableViewController *)primaryVC
 {
   UIViewController *viewController;
-  NSArray *accounts;
-  switch(item) {
-    case NYPLSettingsPrimaryTableViewControllerItemAccount:
-      accounts = [[NYPLSettings sharedSettings] settingsAccountsList];
-      viewController = [[NYPLSettingsAccountsTableViewController alloc] initWithAccounts:accounts];
-      break;
-    case NYPLSettingsPrimaryTableViewControllerItemAbout:
+  switch(staticCell) {
+    case PrimaryTableViewStaticCellTypeAbout:
       viewController = [[RemoteHTMLViewController alloc]
                         initWithURL:[NSURL URLWithString:NYPLAcknowledgementsURLString]
                         title:NSLocalizedString(@"AboutApp", nil)
                         failureMessage:NSLocalizedString(@"SettingsConnectionFailureMessage", nil)];
       break;
-    case NYPLSettingsPrimaryTableViewControllerItemEULA:
+    case PrimaryTableViewStaticCellTypeEula:
       viewController = [[RemoteHTMLViewController alloc]
                         initWithURL:[NSURL URLWithString:NYPLUserAgreementURLString]
                         title:NSLocalizedString(@"EULA", nil)
                         failureMessage:NSLocalizedString(@"SettingsConnectionFailureMessage", nil)];
       break;
-    case NYPLSettingsPrimaryTableViewControllerItemSoftwareLicenses:
+    case PrimaryTableViewStaticCellTypeSoftwareLicenses:
       viewController = [[BundledHTMLViewController alloc]
                         initWithFileURL:[[NSBundle mainBundle]
                                          URLForResource:@"software-licenses"
                                          withExtension:@"html"]
                         title:NSLocalizedString(@"SoftwareLicenses", nil)];
       break;
-    case NYPLSettingsPrimaryTableViewControllerItemHelpStack: {
+    case PrimaryTableViewStaticCellTypeHelpStack: {
       [[HSHelpStack instance] setThemeFrompList:@"HelpStackTheme"];
       HSHelpStack *helpStack = [HSHelpStack instance];
       helpStack.gear = [APIKeys topLevelHelpStackGear];
@@ -140,19 +121,30 @@ ontoPrimaryViewController:(__attribute__((unused)) UIViewController *)primaryVie
         firstVC.navigationItem.leftBarButtonItem = nil;
         [self showDetailViewController:mainNavVC sender:self];
       } else {
-        [settingsPrimaryTableViewController.tableView
-         deselectRowAtIndexPath:NYPLSettingsPrimaryTableViewControllerIndexPathFromSettingsItem(item)
-         animated:YES];
+        [primaryVC.tableView deselectRowAtIndexPath:path animated:YES];
         [[HSHelpStack instance] showHelp:self];
       }
       return;
     }
-    case NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL:
+    case PrimaryTableViewStaticCellTypeCustomFeedUrl:
+      //Handled in 
+    case PrimaryTableViewStaticCellTypeNewAccount:
       return;
   }
   
   [self showDetailViewController:[[UINavigationController alloc]
                                   initWithRootViewController:viewController]
+                          sender:self];
+}
+
+- (void)didSelectWithLibrary:(NSInteger)library
+                      atPath:(NSIndexPath *)__unused path
+   fromPrimaryViewController:(NYPLSettingsAccountsTableViewController *)__unused primaryVC
+{
+  UIViewController *detailVC = [[NYPLSettingsAccountDetailViewController alloc] initWithAccount:library];
+  
+  [self showDetailViewController:[[UINavigationController alloc]
+                                  initWithRootViewController:detailVC]
                           sender:self];
 }
 
