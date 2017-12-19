@@ -9,7 +9,6 @@
 #import "NYPLMyBooksNavigationController.h"
 #import "NYPLMyBooksViewController.h"
 #import "NYPLHoldsNavigationController.h"
-#import "NYPLSettingsPrimaryTableViewController.h"
 #import "SimplyE-Swift.h"
 #import "NYPLAppDelegate.h"
 #import "NSString+NYPLStringAdditions.h"
@@ -137,8 +136,6 @@
     UINavigationController *masterNavVC = [[splitViewVC viewControllers] firstObject];
     [masterNavVC popToRootViewControllerAnimated:NO];
     [[NYPLRootTabBarController sharedController] setSelectedIndex:tabCount-1];
-    NYPLSettingsPrimaryTableViewController *tableVC = [[masterNavVC viewControllers] firstObject];
-    [tableVC.delegate settingsPrimaryTableViewController:tableVC didSelectItem:NYPLSettingsPrimaryTableViewControllerItemAccount];
   }]];
 
   [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil) style:(UIAlertActionStyleCancel) handler:nil]];

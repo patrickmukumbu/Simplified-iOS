@@ -9,7 +9,6 @@
 #import "NYPLConfiguration.h"
 #import "NYPLRootTabBarController.h"
 #import "NYPLCatalogNavigationController.h"
-#import "NYPLSettingsPrimaryTableViewController.h"
 #import "SimplyE-Swift.h"
 
 #if defined(FEATURE_DRM_CONNECTOR)
@@ -110,8 +109,6 @@
     UINavigationController *masterNavVC = [[splitViewVC viewControllers] firstObject];
     [masterNavVC popToRootViewControllerAnimated:NO];
     [[NYPLRootTabBarController sharedController] setSelectedIndex:tabCount-1];
-    NYPLSettingsPrimaryTableViewController *tableVC = [[masterNavVC viewControllers] firstObject];
-    [tableVC.delegate settingsPrimaryTableViewController:tableVC didSelectItem:NYPLSettingsPrimaryTableViewControllerItemAccount];
   }]];
   
   [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Cancel", nil) style:(UIAlertActionStyleCancel) handler:nil]];

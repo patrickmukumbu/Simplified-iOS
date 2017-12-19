@@ -151,7 +151,7 @@ final class NYPLWelcomeScreenViewController: UIViewController {
     }
     // Existing User
     if NYPLSettings.shared().acceptedEULABeforeMultiLibrary == false {
-      let listVC = NYPLWelcomeScreenAccountList { acct in
+      let listVC = NYPLAccountListChooser { acct in
         if (acct.id != 2) {
           NYPLSettings.shared().settingsAccountsList = [acct.id, 2]
         } else {
@@ -161,7 +161,7 @@ final class NYPLWelcomeScreenViewController: UIViewController {
       }
       self.navigationController?.pushViewController(listVC, animated: true)
     } else {
-      let listVC = NYPLWelcomeScreenAccountList { acct in
+      let listVC = NYPLAccountListChooser { acct in
         if (acct.id != 0 && acct.id != 2) {
           NYPLSettings.shared().settingsAccountsList = [acct.id, 0, 2]
         } else {
@@ -185,16 +185,21 @@ final class NYPLWelcomeScreenViewController: UIViewController {
 }
 
 
-/// List of available Libraries/Accounts to select as patron's primary
-/// when going through Welcome Screen flow.
-final class NYPLWelcomeScreenAccountList: UIViewController, UITableViewDelegate, UITableViewDataSource {
+/// List of Libraries/Accounts for a patron to select.
+final class NYPLAccountListChooser: UIViewController, UITableViewDelegate, UITableViewDataSource {
   
-  var accounts: [Account]!
+  var accounts: [Account]
   let completion: (Account) -> ()
   weak var tableView : UITableView!
   
-  required init(completion: @escaping (Account) -> ()) {
-    self.completion = completion
+  convenience init(selectedLibrary: @escaping (Account) -> ()) {
+    let accounts = AccountsManager.shared.accounts
+    self.init(accounts: accounts, selectedLibrary: selectedLibrary)
+  }
+  
+  required init(accounts: [Account], selectedLibrary: @escaping (Account) -> ()) {
+    self.completion = selectedLibrary
+    self.accounts = accounts
     super.init(nibName:nil, bundle:nil)
   }
   
@@ -204,22 +209,25 @@ final class NYPLWelcomeScreenAccountList: UIViewController, UITableViewDelegate,
   }
   
   override func viewDidLoad() {
-    self.view = UITableView(frame: .zero, style: .grouped)
-    self.tableView = self.view as! UITableView
-    self.tableView.delegate = self
-    self.tableView.dataSource = self
+    view = UITableView(frame: .zero, style: .grouped)
+    view.backgroundColor = NYPLConfiguration.backgroundColor()
     
-    self.accounts = AccountsManager.shared.accounts
-    self.title = NSLocalizedString("LibraryListTitle", comment: "Title that also informs the user that they should choose a library from the list.")
-    self.view.backgroundColor = NYPLConfiguration.backgroundColor()
+    tableView = self.view as! UITableView
+    tableView.delegate = self
+    tableView.dataSource = self
+    
+    let screenTitle = NSLocalizedString("LibraryListTitle", comment: "Title that also informs the user that they should choose a library from the list.")
+    title = screenTitle
   }
   
-   func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+  func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
     return 100
   }
   
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     completion(accounts[indexPath.row])
+    self.accounts.remove(at: indexPath.row)
+    tableView.deleteRows(at: [indexPath], with: .right)
   }
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -231,22 +239,7 @@ final class NYPLWelcomeScreenAccountList: UIViewController, UITableViewDelegate,
   }
   
   func cellForLibrary(_ account: Account) -> UITableViewCell {
-    let cell = UITableViewCell.init(style: .subtitle, reuseIdentifier: "")
-    
-    cell.textLabel?.font = UIFont.systemFont(ofSize: 18)
-    cell.textLabel?.text = account.name
-    cell.detailTextLabel?.font = UIFont(name: "AvenirNext-Regular", size: 13)
-    cell.detailTextLabel?.text = account.subtitle
-    cell.detailTextLabel?.numberOfLines = 3
-    if let logo = account.logo
-    {
-      cell.imageView?.image = UIImage(named: logo)
-    }
-    else
-    {
-      cell.imageView?.image = #imageLiteral(resourceName: "LibraryLogoMagic")
-    }
-    
+    let cell = NYPLLibraryTableViewCell.init(library: account, style: .subtitle, reuseID: "")
     return cell
   }
 }
