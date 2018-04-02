@@ -10,17 +10,17 @@
 fileprivate func stringFor(_ cellType: PrimaryTableViewStaticCellType) -> String {
   switch cellType {
   case .newAccount:
-    return "Add a Library"
+    return NSLocalizedString("Add a Library", comment: "")
   case .about:
-    return "AboutApp"
+    return NSLocalizedString("AboutApp", comment: "")
   case .eula:
-    return "EULA"
+    return NSLocalizedString("EULA", comment: "")
   case .helpStack:
-    return "Help"
+    return NSLocalizedString("Help", comment: "")
   case .customFeedUrl:
-    return "Custom Feed URL"
+    return NSLocalizedString("Custom Feed URL", comment: "")
   case .softwareLicenses:
-    return "SoftwareLicenses"
+    return NSLocalizedString("SoftwareLicenses", comment: "")
   }
 }
 
@@ -172,7 +172,7 @@ final class NYPLSettingsPrimaryTableViewController: UIViewController, UITableVie
         return cellForLibrary(AccountsManager.shared.account(
           userAddedSecondaryAccounts[indexPath.row])!, indexPath)
       } else {
-        return tableViewCell(withString: "Add a Library")
+        return tableViewCell(withString: NSLocalizedString("Add a Library", comment: ""))
       }
     } else if cellType == .customFeedUrl {
       return customFeedURLCell()
@@ -205,7 +205,7 @@ final class NYPLSettingsPrimaryTableViewController: UIViewController, UITableVie
   
   func tableViewCell(withString string: String) -> UITableViewCell {
     let cell = UITableViewCell.init(style: .default, reuseIdentifier: nil)
-    cell.textLabel?.text = NSLocalizedString(string, comment: "")
+    cell.textLabel?.text = string
     cell.textLabel?.font = UIFont.customFont(forTextStyle: .body)
     if splitViewController?.traitCollection.horizontalSizeClass == .compact {
       cell.accessoryType = .disclosureIndicator
