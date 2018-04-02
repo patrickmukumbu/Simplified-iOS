@@ -273,7 +273,6 @@ final class NYPLSettingsPrimaryTableViewController: UIViewController, UITableVie
       userAddedSecondaryAccounts.remove(at: indexPath.row)
       tableView.deleteRows(at: [indexPath], with: .fade)
       updateNYPLSettingsAccountList()
-      self.tableView.reloadData()
     }
   }
   
