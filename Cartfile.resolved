@@ -1,6 +1,5 @@
-binary "AudioEngine.json" "6.1.13"
 binary "PSPDFKit.json" "7.5.2"
-github "Minitex/MinitexPDFProtocols" "0.0.2"
-github "NYPL-Simplified/NYPLAEToolkit" "0.0.7"
+github "Minitex/MinitexPDFProtocols" "0.0.3"
+github "Minitex/PDF-iOS" "6f32e3373b1df6b478bb3e0c961df104e21ab90e"
 github "NYPL-Simplified/NYPLAudiobookToolkit" "1.0.5"
 github "PureLayout/PureLayout" "v3.0.2"
