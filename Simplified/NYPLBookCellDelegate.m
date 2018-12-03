@@ -145,10 +145,9 @@
         NYPLLOG_F(@"Returning to Audiobook Location: %@", chapterLocation);
         [manager.audiobook.player movePlayheadToLocation:chapterLocation];
       }
-      //TODO: Disabled until a better solution is decided on.
-//      else {
-//        [self presentWwanNetworkWarningIfNeeded];
-//      }
+      else {
+        [self presentWwanNetworkWarningIfNeeded];
+      }
 
       [self scheduleTimerForAudiobook:book manager:manager viewController:audiobookVC];
 
@@ -240,15 +239,24 @@
 
 #pragma mark
 
+// Inform a user if they're downloading over cellular once for each new audiobook.
 - (void)presentWwanNetworkWarningIfNeeded
 {
-  // Inform a user if they're downloading over cellular once for each new audiobook.
   NetworkStatus status = [[NYPLReachability sharedReachability].hostReachabilityManager currentReachabilityStatus];
   if (status == ReachableViaWWAN) {
     NSString *title = NSLocalizedString(@"Large Download", nil);
-    NSString *message = NSLocalizedString(@"Connecting to Wi-Fi may improve performance.", nil);
+    NSString *message = NSLocalizedString(@"Connecting to Wi-Fi may improve performance. You can also turn off cellular downloads in Settings.", nil);
     NYPLAlertController *alert = [NYPLAlertController alertWithTitle:title singleMessage:message];
-    [alert addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"Continue", nil) style:UIAlertActionStyleDefault handler:nil]];
+    UIAlertAction *settingsAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Settings", nil)
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction *action) {
+                                                             if (action)[UIApplication.sharedApplication openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+                                                           }];
+    UIAlertAction *continueAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"Continue", nil) style:UIAlertActionStyleDefault handler:nil];
+    alert.preferredAction = continueAction;
+    [alert addAction:continueAction];
+    [alert addAction:settingsAction];
+
     [[NYPLRootTabBarController sharedController] safelyPresentViewController:alert animated:YES completion:nil];
   }
 }
