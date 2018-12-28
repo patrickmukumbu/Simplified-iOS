@@ -2,6 +2,11 @@ import UIKit
 
 /// Advanced Menu in Settings
 @objcMembers class NYPLSettingsAdvancedViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+
+  private enum AdvancedSettingsCellType: Int, CaseIterable {
+    case removeAllBookmarksCell = 0
+    case cellularNetworkSettingsCell = 1
+  }
   
   var account: Account
 
@@ -30,8 +35,14 @@ import UIKit
   // MARK: - UITableViewDelegate
   
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    if (indexPath.row == 0) {
 
+    guard let cellType = AdvancedSettingsCellType(rawValue: indexPath.section),
+      indexPath.row == 0 else {
+        fatalError("InternalInconsistencyException")
+    }
+
+    switch cellType {
+    case .removeAllBookmarksCell:
       let cell = tableView.cellForRow(at: indexPath)
       cell?.setSelected(false, animated: true)
       
@@ -50,6 +61,11 @@ import UIKit
       alert.addAction(cancelAction)
       
       alert.present(fromViewControllerOrNil: nil, animated: true, completion: nil)
+    case .cellularNetworkSettingsCell:
+      if let settingsUrl = URL(string: UIApplication.openSettingsURLString),
+        UIApplication.shared.canOpenURL(settingsUrl) {
+        UIApplication.shared.openURL(settingsUrl)
+      }
     }
   }
   
@@ -78,7 +94,7 @@ import UIKit
   // MARK: - UITableViewDataSource
   
   func numberOfSections(in tableView: UITableView) -> Int {
-    return 1
+    return AdvancedSettingsCellType.allCases.count
   }
   
   func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -86,16 +102,44 @@ import UIKit
   }
   
   func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    
-    let cell = UITableViewCell()
-    cell.textLabel?.text = NSLocalizedString("Delete Server Data", comment:"")
-    cell.textLabel?.font = UIFont.customFont(forTextStyle: .body)
-    cell.textLabel?.textColor = .red
-    return cell
+
+    guard let cellType = AdvancedSettingsCellType(rawValue: indexPath.section),
+      indexPath.row == 0 else {
+        fatalError("InternalInconsistencyException")
+    }
+
+    switch cellType {
+    case .removeAllBookmarksCell:
+      let cell = UITableViewCell()
+      cell.textLabel?.text = NSLocalizedString("Delete Server Data", comment:"")
+      cell.textLabel?.font = UIFont.customFont(forTextStyle: .body)
+      cell.textLabel?.textColor = .red
+      return cell
+    case .cellularNetworkSettingsCell:
+      let cell = UITableViewCell()
+      cell.textLabel?.text = NSLocalizedString("WiFi-Only Downloads", comment:"")
+      cell.textLabel?.font = UIFont.customFont(forTextStyle: .body)
+      if let settingsUrl = URL(string: UIApplication.openSettingsURLString),
+        !UIApplication.shared.canOpenURL(settingsUrl) {
+        cell.textLabel?.isEnabled = false
+      }
+      return cell
+    }
   }
   
   func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
-    return NSLocalizedString("Delete all the bookmarks you have saved in the cloud.", comment:"")
+
+    guard let cellType = AdvancedSettingsCellType(rawValue: section) else {
+        fatalError("InternalInconsistencyException")
+    }
+
+    switch cellType {
+    case .removeAllBookmarksCell:
+      return NSLocalizedString("Delete all the bookmarks you have saved in the cloud.", comment:"")
+    case .cellularNetworkSettingsCell:
+      return NSLocalizedString("You can restrict downloads to WiFi-only by turning off \"Cellular Data\".", comment:"")
+    }
   }
+
 
 }
