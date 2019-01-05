@@ -1,5 +1,6 @@
 #import "NYPLConfiguration.h"
 #import "NYPLSettings.h"
+#import <PureLayout/PureLayout.h>
 
 #import "NYPLSettingsPrimaryTableViewController.h"
 
@@ -28,6 +29,13 @@ SettingsItemFromIndexPath(NSIndexPath *const indexPath)
     case 2:
       switch (indexPath.row) {
         case 0:
+          return NYPLSettingsPrimaryTableViewControllerItemCellularData;
+        default:
+          @throw NSInvalidArgumentException;
+      }
+    case 3:
+      switch (indexPath.row) {
+        case 0:
           return NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL;
         default:
           @throw NSInvalidArgumentException;
@@ -49,8 +57,10 @@ NSIndexPath *NYPLSettingsPrimaryTableViewControllerIndexPathFromSettingsItem(
       return [NSIndexPath indexPathForRow:1 inSection:1];
     case NYPLSettingsPrimaryTableViewControllerItemSoftwareLicenses:
       return [NSIndexPath indexPathForRow:2 inSection:1];
-    case NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL:
+    case NYPLSettingsPrimaryTableViewControllerItemCellularData:
       return [NSIndexPath indexPathForRow:0 inSection:2];
+    case NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL:
+      return [NSIndexPath indexPathForRow:0 inSection:3];
     default:
       @throw NSInvalidArgumentException;
   }
@@ -59,6 +69,7 @@ NSIndexPath *NYPLSettingsPrimaryTableViewControllerIndexPathFromSettingsItem(
 @interface NYPLSettingsPrimaryTableViewController () <UITextFieldDelegate>
 
 @property (nonatomic, strong) UILabel *infoLabel;
+@property (nonatomic, strong) UILabel *cellularDescriptionLabel;
 @property (nonatomic) BOOL shouldShowEmptyCustomODPSURLField;
 
 @end
@@ -114,14 +125,90 @@ didSelectRowAtIndexPath:(NSIndexPath *const)indexPath
 
 - (CGFloat)tableView:(__unused UITableView *)tableView heightForFooterInSection:(NSInteger)section
 {
-  NSInteger sectionCount = [self numberOfSectionsInTableView:self.tableView];
-  if (section == (sectionCount-1))
+  NSIndexPath *firstPath = [NSIndexPath indexPathForRow:0 inSection:section];
+  NYPLSettingsPrimaryTableViewControllerItem setting = SettingsItemFromIndexPath(firstPath);
+
+  if (setting == NYPLSettingsPrimaryTableViewControllerItemCellularData ||
+      setting == NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL) {
+    return UITableViewAutomaticDimension;
+  } else {
+    return 0;
+  }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView estimatedHeightForFooterInSection:(NSInteger)section
+{
+  NSIndexPath *firstPath = [NSIndexPath indexPathForRow:0 inSection:section];
+  NYPLSettingsPrimaryTableViewControllerItem setting = SettingsItemFromIndexPath(firstPath);
+
+  if (setting == NYPLSettingsPrimaryTableViewControllerItemCellularData ||
+      setting == NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL) {
     return 45.0;
-  return 0;
+  } else {
+    return 0;
+  }
 }
 
 - (UIView *)tableView:(__unused UITableView *)tableView viewForFooterInSection:(NSInteger)section
 {
+  BOOL customURLEnabled = (self.shouldShowEmptyCustomODPSURLField || [NYPLSettings sharedSettings].customMainFeedURL);
+  NSIndexPath *firstPath = [NSIndexPath indexPathForRow:0 inSection:section];
+  NYPLSettingsPrimaryTableViewControllerItem setting = SettingsItemFromIndexPath(firstPath);
+
+  if (setting == NYPLSettingsPrimaryTableViewControllerItemCellularData ||
+      setting == NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL) {
+    if (self.infoLabel == nil) {
+      self.infoLabel = [[UILabel alloc] init];
+      [self.infoLabel setFont:[UIFont systemFontOfSize:12]];
+      NSString *productName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"];
+      NSString *version = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+      NSString *build = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleVersionKey];
+      self.infoLabel.text = [NSString stringWithFormat:@"%@ version %@ (%@)", productName, version, build];
+      self.infoLabel.textAlignment = NSTextAlignmentCenter;
+      [self.infoLabel sizeToFit];
+
+      UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(revealCustomFeedUrl)];
+      tap.numberOfTapsRequired = 7;
+      [self.infoLabel setUserInteractionEnabled:YES];
+      [self.infoLabel addGestureRecognizer:tap];
+    }
+    if (self.cellularDescriptionLabel == nil) {
+      self.cellularDescriptionLabel = [[UILabel alloc] init];
+      [self.cellularDescriptionLabel setFont:[UIFont systemFontOfSize:12]];
+      self.cellularDescriptionLabel.text = NSLocalizedString(@"Enable WiFi-only downloading by turning off \"Cellular Data\".", nil);
+    }
+  }
+
+  if (!customURLEnabled && setting == NYPLSettingsPrimaryTableViewControllerItemCellularData) {
+
+    UIView *container = [[UIView alloc] init];
+    [container addSubview:self.cellularDescriptionLabel];
+    [container addSubview:self.infoLabel];
+    [self.cellularDescriptionLabel autoAlignAxisToSuperviewAxis:ALAxisVertical];
+    [self.cellularDescriptionLabel autoPinEdgeToSuperviewMargin:ALEdgeTop];
+    [self.cellularDescriptionLabel autoPinEdgeToSuperviewMargin:ALEdgeLeading];
+    [self.cellularDescriptionLabel autoPinEdgeToSuperviewMargin:ALEdgeTrailing];
+    [self.cellularDescriptionLabel autoPinEdge:ALEdgeBottom toEdge:ALEdgeTop ofView:self.infoLabel withOffset:-8.0];
+    [self.infoLabel autoAlignAxisToSuperviewAxis:ALAxisVertical];
+    [self.infoLabel autoPinEdgeToSuperviewMargin:ALEdgeBottom];
+    [self.infoLabel autoPinEdgeToSuperviewMargin:ALEdgeLeading];
+    [self.infoLabel autoPinEdgeToSuperviewMargin:ALEdgeTrailing];
+    return container;
+
+  } else if (customURLEnabled) {
+
+    if (setting == NYPLSettingsPrimaryTableViewControllerItemCellularData) {
+
+      return self.cellularDescriptionLabel;
+
+    } else if (setting == NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL) {
+
+      return self.infoLabel;
+
+    }
+  }
+
+
   NSInteger sectionCount = [self numberOfSectionsInTableView:self.tableView];
   if (section == (sectionCount-1)) {
     if (self.infoLabel == nil) {
@@ -161,6 +248,9 @@ didSelectRowAtIndexPath:(NSIndexPath *const)indexPath
     }
     case NYPLSettingsPrimaryTableViewControllerItemAbout: {
       return [self settingsPrimaryTableViewCellWithText:NSLocalizedString(@"AboutApp", nil)];
+    }
+    case NYPLSettingsPrimaryTableViewControllerItemCellularData: {
+      return [self settingsPrimaryTableViewCellWithText:NSLocalizedString(@"Change Cellular Usage", nil)];
     }
     case NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL: {
       UITableViewCell *const cell = [[UITableViewCell alloc]
@@ -202,7 +292,7 @@ didSelectRowAtIndexPath:(NSIndexPath *const)indexPath
 
 - (NSInteger)numberOfSectionsInTableView:(__attribute__((unused)) UITableView *)tableView
 {
-  return 2 + (self.shouldShowEmptyCustomODPSURLField || !![NYPLSettings sharedSettings].customMainFeedURL);
+  return 3 + (self.shouldShowEmptyCustomODPSURLField || !![NYPLSettings sharedSettings].customMainFeedURL);
 }
 
 -(BOOL)tableView:(__attribute__((unused)) UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath

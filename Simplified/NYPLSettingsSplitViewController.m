@@ -125,6 +125,9 @@ ontoPrimaryViewController:(__attribute__((unused)) UIViewController *)primaryVie
                                          withExtension:@"html"]
                         title:NSLocalizedString(@"SoftwareLicenses", nil)];
       break;
+    case NYPLSettingsPrimaryTableViewControllerItemCellularData:
+      //GODO TODO
+      return;
     case NYPLSettingsPrimaryTableViewControllerItemCustomFeedURL:
       return;
   }
