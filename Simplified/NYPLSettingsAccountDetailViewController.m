@@ -429,25 +429,11 @@ double const requestTimeoutInterval = 25.0;
      if(!success) {
        // Even though we failed, let the user continue to log out.
        // The most likely reason is a user changing their PIN.
-       // TODO: Remote logging can be removed when it is determined that sufficient data has been collected.
        NYPLLOG(@"Failed to deauthorize successfully. User will lose an activation on this device.");
-       [Bugsnag notifyError:[NSError errorWithDomain:@"org.nypl.labs.SimplyE" code:4 userInfo:nil]
-                      block:^(BugsnagCrashReport * _Nonnull report) {
-                        report.context = @"NYPLSettingsAccountDetailViewController";
-                        report.severity = BSGSeverityInfo;
-                        report.errorMessage = @"User has lost an activation on signout due to NYPLAdept Error.";
-                      }];
+       [self bugsnagLogDeauthFailure];
      }
      else {
        NYPLLOG(@"***Successful DRM Deactivation***");
-       // FIXME: NYPLDeviceManager should be updated once redesign of NYPLAccount is complete
-       // Until then, only use on currently active library account
-       if (self.selectedAccountType == [AccountsManager shared].currentAccount) {
-         NSURL *deviceManager =  [NSURL URLWithString: [self.selectedNYPLAccount licensor][@"deviceManager"]];
-         if (deviceManager != nil) {
-           [NYPLDeviceManager deleteDevice:[self.selectedNYPLAccount deviceID] url:deviceManager];
-         }
-       }
      }
 
      afterDeauthorization();
@@ -516,15 +502,6 @@ double const requestTimeoutInterval = 25.0;
           NYPLLOG(@"***DRM Auth/Activation Completion***");
           
           if (success) {
-            // FIXME: NYPLDeviceManager should be updated once redesign of NYPLAccount is complete
-            // Until then, only use on currently active library account
-            if (self.selectedAccountType == [AccountsManager shared].currentAccount.id) {
-              NSURL *deviceManager = [NSURL URLWithString: [self.selectedNYPLAccount licensor][@"deviceManager"]];
-              if (deviceManager != nil) {
-                [NYPLDeviceManager postDevice:deviceID url:deviceManager];
-              }
-            }
-            
             [[NSOperationQueue mainQueue] addOperationWithBlock:^{
               [self.selectedNYPLAccount setUserID:userID];
               [self.selectedNYPLAccount setDeviceID:deviceID];
@@ -635,6 +612,8 @@ double const requestTimeoutInterval = 25.0;
   }];
 }
 
+// FIXME: If a user signs out of an account that has not been the current active catalog recently,
+// it seems plausible they would lose an activation without a fresh license token from its feed.
 - (void)bugsnagLogInvalidLicensor
 {
   [Bugsnag notifyError:[NSError errorWithDomain:@"org.nypl.labs.SimplyE" code:3 userInfo:nil]
@@ -644,6 +623,16 @@ double const requestTimeoutInterval = 25.0;
                    report.errorMessage = @"No Valid Licensor available to deauthorize device. Signing out NYPLAccount credentials anyway with no message to the user.";
                    NSDictionary *metadata = @{@"accountTypeID" : @(self.selectedAccountType)};
                    [report addMetadata:metadata toTabWithName:@"Extra Data"];
+                 }];
+}
+
+- (void)bugsnagLogDeauthFailure
+{
+  [Bugsnag notifyError:[NSError errorWithDomain:@"org.nypl.labs.SimplyE" code:4 userInfo:nil]
+                 block:^(BugsnagCrashReport * _Nonnull report) {
+                   report.context = @"NYPLSettingsAccountDetailViewController";
+                   report.severity = BSGSeverityInfo;
+                   report.errorMessage = @"User has lost an activation on signout due to NYPLAdept Error.";
                  }];
 }
 
