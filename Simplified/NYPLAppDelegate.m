@@ -35,7 +35,7 @@
 
 @implementation NYPLAppDelegate
 
-const NSTimeInterval MinimumBackgroundFetchInterval = 60 * 60 * 12;
+const NSTimeInterval MinimumBackgroundFetchInterval = 60 * 60 * 4;
 
 #pragma mark UIApplicationDelegate
 
@@ -78,15 +78,18 @@ didFinishLaunchingWithOptions:(__attribute__((unused)) NSDictionary *)launchOpti
 performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))backgroundFetchHandler
 {
   UIBackgroundTaskIdentifier bgTask = [application beginBackgroundTaskWithExpirationHandler:^{
+    [NYPLUserNotifications testSyncExpired];
     backgroundFetchHandler(UIBackgroundFetchResultFailed);
   }];
 
   // Only the "current library" account syncs during a background fetch.
+  [NYPLUserNotifications testSyncStarted];
   [[NYPLBookRegistry sharedRegistry] syncWithCompletionHandler:^(BOOL success) {
     if (success) {
       [[NYPLBookRegistry sharedRegistry] save];
     }
   } backgroundFetchHandler:^(UIBackgroundFetchResult result) {
+    [NYPLUserNotifications testSyncEndedWithStatus:result];
     backgroundFetchHandler(result);
     [application endBackgroundTask:bgTask];
   }];

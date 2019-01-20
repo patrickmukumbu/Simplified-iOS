@@ -266,11 +266,13 @@ static NSString *const RecordsKey = @"records";
 
     if(self.syncing) {
       [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [NYPLUserNotifications testSyncEndedAlreadySyncing];
         if(fetchHandler) fetchHandler(UIBackgroundFetchResultNoData);
       }];
       return;
     } else if (![[NYPLAccount sharedAccount] hasBarcodeAndPIN]) {
       [[NSOperationQueue mainQueue] addOperationWithBlock:^{
+        [NYPLUserNotifications testSyncEndedNoCreds];
         if(handler) handler(NO);
         if(fetchHandler) fetchHandler(UIBackgroundFetchResultNoData);
         [[NSNotificationCenter defaultCenter] postNotificationName:NYPLSyncEndedNotification object:nil];
@@ -305,6 +307,7 @@ static NSString *const RecordsKey = @"records";
        [self broadcastChange];
        [[NSOperationQueue mainQueue]
         addOperationWithBlock:^{
+          [NYPLUserNotifications testSyncEndedResetOccurred];
           if(fetchHandler) fetchHandler(UIBackgroundFetchResultNoData);
         }];
        return;

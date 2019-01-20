@@ -104,6 +104,171 @@ let DefaultActionIdentifier = "UNNotificationDefaultActionIdentifier"
     }
   }
 
+  @objc class func testSyncStarted() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Background Sync Began", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+      content.categoryIdentifier = HoldNotificationCategoryIdentifier
+
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  @objc class func testSyncEnded(status: Int) {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Background Sync Ended with Status: \(status)", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+      content.categoryIdentifier = HoldNotificationCategoryIdentifier
+
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  @objc class func testSyncEndedAlreadySyncing() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Sync Ended (ALREADY SYNCING).", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  @objc class func testSyncEndedNoCreds() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Sync Ended (NO FOUND CREDENTIALS).", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  @objc class func testSyncEndedResetOccurred() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Sync Ended (A RESET HAS OCCURRED).", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  class func testSyncActionItemFinished() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Notification Action Finished.", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
+  @objc class func testSyncExpired() {
+    let unCenter = UNUserNotificationCenter.current()
+    unCenter.getNotificationSettings { (settings) in
+      guard settings.authorizationStatus == .authorized else { return }
+
+      let title = NSLocalizedString("BETA TEST", comment: "")
+      let content = UNMutableNotificationContent()
+      content.body = NSLocalizedString("Error: Background Sync expired before completing", comment: "")
+
+      content.title = title
+      content.sound = UNNotificationSound.default
+
+      let request = UNNotificationRequest.init(identifier: UUID.init().uuidString,
+                                               content: content,
+                                               trigger: nil)
+      unCenter.add(request) { error in
+        if (error != nil) {
+          Log.error(#file, "Error creating BETA TEST notification.")
+        }
+      }
+    }
+  }
+
   private func registerNotificationCategories()
   {
     let checkOutNotificationAction = UNNotificationAction(identifier: CheckOutActionIdentifier,
@@ -162,6 +327,8 @@ extension NYPLUserNotifications: UNUserNotificationCenterDelegate
         completionHandler()
       }
       downloadCenter.startBorrow(for: book, attemptDownload: false) {
+        Log.debug(#file, "Borrow has completed.")
+        NYPLUserNotifications.testSyncActionItemFinished()
         completionHandler()
         UIApplication.shared.endBackgroundTask(bgTask)
       }
